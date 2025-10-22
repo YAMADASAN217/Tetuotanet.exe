@@ -115,3 +115,10 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+# ...
+# QWebEngineViewやQTabWidgetを使っている部分が、
+# Windows 11でも安定して動くブラウザ機能を実現しています！
+# ...
+if __name__ == '__main__':
+    # ... (この部分でアプリが起動します) ...
+    sys.exit(app.exec_())
