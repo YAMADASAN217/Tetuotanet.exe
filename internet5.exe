@@ -1,13 +1,13 @@
-name: Build Simple Browser EXE (32-bit for Max Compatibility)
+name: Build Simple Browser EXE (PySide6 / 32-bit Final Attempt)
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # GitHubのActionsタブから手動で実行できるようにする
+  workflow_dispatch: # 手動実行も可能
 
 jobs:
   build_windows:
-    runs-on: windows-latest # Windows環境で実行
+    runs-on: windows-latest # Windows環境でビルド
 
     steps:
     - name: Checkout code
@@ -19,25 +19,27 @@ jobs:
     - name: Set up Python 3.11 (32-bit)
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11' # 安定版を使用
-        architecture: 'x86'    # これが32ビット強制指定の魔法！
+        python-version: '3.11'
+        architecture: 'x86'    # これで32ビット環境が確定
     
     # ----------------------------------------------------
-    # 依存関係のインストール (Nuitkaを使用)
+    # 依存関係のインストール (Nuitka + PySide6)
     # ----------------------------------------------------
-    - name: Install dependencies (Nuitka)
+    - name: Install dependencies (Nuitka + PySide6)
       run: |
         python -m pip install --upgrade pip
-        # PyQtWebEngineを使うので、NuitkaとQtライブラリをインストール
-        pip install nuitka PyQt5 PyQtWebEngine
-
+        # PySide6とWebEngine、そしてNuitkaをインストール
+        pip install nuitka PySide6 PySide6-WebEngine
+    
     # ----------------------------------------------------
     # NuitkaによるEXEファイルのビルド
     # ----------------------------------------------------
-    - name: Build the EXE using Nuitka (Standalone OneFile)
-      # コマンドはNuitkaの公式推奨オプション
+    - name: Build the EXE using Nuitka (PySide6 Plugin)
+      # --standaloneと--onefileで一つの実行ファイルにまとめます
+      # --plugin-enable=pyside6 でPySideの依存ファイルを確実に収集
+      # --disable-console は、実行時に黒い画面を出さないようにするため
       run: |
-        python -m nuitka --standalone --onefile --windows-disable-console --plugin-enable=qt-plugins browser.py
+        python -m nuitka --standalone --onefile --disable-console --plugin-enable=pyside6 browser.py
     
     # ----------------------------------------------------
     # 成果物のアップロード
@@ -45,7 +47,5 @@ jobs:
     - name: Upload the compiled EXE
       uses: actions/upload-artifact@v4
       with:
-        name: SimpleBrowser-32bit-Windows-EXE
-        # Nuitkaはデフォルトでカレントディレクトリに EXE を出力します
+        name: SimpleBrowser-PySide6-32bit-Windows-EXE
         path: browser.exe
-        # ちなみに、Nuitkaはビルド時に .dist フォルダを作りません。
