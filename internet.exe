@@ -1,0 +1,117 @@
+using System;
+using System.Windows.Forms;
+using Microsoft.Web.WebView2.Core;
+// Microsoft.Web.WebView2 NuGetパッケージが必要です
+
+namespace MySimpleBrowser
+{
+    public partial class Form1 : Form
+    {
+        // フォームが最初に読み込まれるときに呼ばれます
+        public Form1()
+        {
+            InitializeComponent();
+            
+            // WebView2の初期化（重要！）
+            InitializeWebView();
+            
+            // 各ボタンにクリックイベントを設定
+            goButton.Click += goButton_Click;
+            backButton.Click += backButton_Click;
+            forwardButton.Click += forwardButton_Click;
+        }
+
+        // WebView2の初期化とイベント登録を行う
+        private async void InitializeWebView()
+        {
+            // CoreWebView2が初期化されるまで待機
+            // これがないとNavigateや履歴操作が実行できません
+            await webView.EnsureCoreWebView2Async(null);
+
+            // 履歴が変化したときのイベントを登録
+            // これで「戻る」「進む」ボタンの有効/無効を更新します
+            webView.CoreWebView2.HistoryChanged += CoreWebView2_HistoryChanged;
+
+            // アドレスバーに初期URLを設定し、移動
+            urlTextBox.Text = "https://www.google.com/";
+            // NavigateメソッドはCoreWebView2が初期化された後に実行する必要があります
+            webView.CoreWebView2.Navigate(urlTextBox.Text); 
+
+            // 初期状態のボタンの状態をチェック
+            UpdateNavigationButtons();
+        }
+
+        // =========================================================
+        // 1. URL移動ボタンの処理
+        // =========================================================
+        private void goButton_Click(object sender, EventArgs e)
+        {
+            // URLTextBoxに入力されたテキストを取得
+            string url = urlTextBox.Text;
+
+            // URLが空でなければ処理
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                // URLが "http://" または "https://" で始まっているかチェック
+                if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+                {
+                    // 始まっていなければ "https://" を付けてみる
+                    url = "https://" + url;
+                }
+
+                try
+                {
+                    // WebView2で指定されたURLに移動
+                    // CoreWebView2が初期化済みであることを前提にCoreWebView2.Navigateを使用
+                    webView.CoreWebView2.Navigate(url);
+                }
+                catch (UriFormatException)
+                {
+                    // URLの形式が正しくない場合などのエラー処理
+                    MessageBox.Show("無効なURL形式です。", "エラー");
+                }
+            }
+        }
+        
+        // =========================================================
+        // 2. 戻る/進むボタンの処理
+        // =========================================================
+        
+        // 戻るボタンがクリックされたとき
+        private void backButton_Click(object sender, EventArgs e)
+        {
+            // 戻れる履歴があるかチェックしてから戻る
+            if (webView.CanGoBack)
+            {
+                webView.GoBack();
+            }
+        }
+
+        // 進むボタンがクリックされたとき
+        private void forwardButton_Click(object sender, EventArgs e)
+        {
+            // 進める履歴があるかチェックしてから進む
+            if (webView.CanGoForward)
+            {
+                webView.GoForward();
+            }
+        }
+        
+        // 履歴が変化したときに呼ばれるイベントハンドラ
+        private void CoreWebView2_HistoryChanged(object sender, object e)
+        {
+            // ページ移動のたびにボタンの状態を更新
+            UpdateNavigationButtons();
+        }
+
+        // 戻る/進むボタンの有効・無効を切り替えるメソッド
+        private void UpdateNavigationButtons()
+        {
+            // WebView2コントロールのCanGoBackプロパティで判断
+            backButton.Enabled = webView.CanGoBack;
+            
+            // WebView2コントロールのCanGoForwardプロパティで判断
+            forwardButton.Enabled = webView.CanGoForward;
+        }
+    }
+}
