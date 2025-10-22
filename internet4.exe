@@ -1,31 +1,40 @@
 import sys
+# ウィンドウ、ボタン、レイアウトなどのGUI部品
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget,
                              QWidget, QVBoxLayout, QHBoxLayout,
                              QLineEdit, QPushButton)
+# ウェブページを表示するための核となる部品
 from PyQt5.QtWebEngineWidgets import QWebEngineView 
+# URLやサイズの情報を扱うための部品
 from PyQt5.QtCore import QUrl, QSize 
 
 class BrowserTab(QWidget):
+    """ブラウザの個別のタブの中身を管理"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+        # WebEngineView (ブラウザ機能の核)
         self.browser = QWebEngineView()
         self.browser.setUrl(QUrl("https://www.google.com")) 
 
+        # ナビゲーションバーの作成
         self.nav_bar = QWidget()
         self.nav_layout = QHBoxLayout(self.nav_bar)
         self.nav_layout.setContentsMargins(5, 5, 5, 5)
 
+        # 戻るボタン
         self.back_button = QPushButton("← 戻る")
         self.back_button.setFixedSize(QSize(60, 25))
         self.back_button.clicked.connect(self.browser.back)
 
+        # 進むボタン
         self.forward_button = QPushButton("→ 進む")
         self.forward_button.setFixedSize(QSize(60, 25))
         self.forward_button.clicked.connect(self.browser.forward)
 
+        # URL入力欄
         self.url_bar = QLineEdit()
         self.url_bar.returnPressed.connect(self.navigate_to_url) 
 
@@ -53,11 +62,13 @@ class BrowserTab(QWidget):
 
 
 class MainWindow(QMainWindow):
+    """メインウィンドウとタブ機能を管理"""
     def __init__(self):
         super().__init__()
         self.setWindowTitle("シンプルブラウザ")
         self.setGeometry(100, 100, 1000, 700) 
 
+        # タブウィジェット
         self.tabs = QTabWidget()
         self.tabs.setDocumentMode(True) 
         self.tabs.setTabsClosable(True)
@@ -101,9 +112,3 @@ if __name__ == '__main__':
     window.show()
     
     sys.exit(app.exec_())
-# コマンドプロンプトまたはPowerShellで実行
-pyinstaller --onefile --windowed --name "Internet Browser" ^
---collect-all PyQt5 ^
---collect-all PyQt5.QtWebEngine ^
---hidden-import PyQt5.sip ^
-browser.py
