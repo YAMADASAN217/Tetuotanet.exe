@@ -1,0 +1,51 @@
+name: Build Simple Browser EXE (32-bit for Max Compatibility)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # GitHubのActionsタブから手動で実行できるようにする
+
+jobs:
+  build_windows:
+    runs-on: windows-latest # Windows環境で実行
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # ----------------------------------------------------
+    # ★最重要★ 32ビット Python (x86) の環境セットアップ
+    # ----------------------------------------------------
+    - name: Set up Python 3.11 (32-bit)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' # 安定版を使用
+        architecture: 'x86'    # これが32ビット強制指定の魔法！
+    
+    # ----------------------------------------------------
+    # 依存関係のインストール (Nuitkaを使用)
+    # ----------------------------------------------------
+    - name: Install dependencies (Nuitka)
+      run: |
+        python -m pip install --upgrade pip
+        # PyQtWebEngineを使うので、NuitkaとQtライブラリをインストール
+        pip install nuitka PyQt5 PyQtWebEngine
+
+    # ----------------------------------------------------
+    # NuitkaによるEXEファイルのビルド
+    # ----------------------------------------------------
+    - name: Build the EXE using Nuitka (Standalone OneFile)
+      # コマンドはNuitkaの公式推奨オプション
+      run: |
+        python -m nuitka --standalone --onefile --windows-disable-console --plugin-enable=qt-plugins browser.py
+    
+    # ----------------------------------------------------
+    # 成果物のアップロード
+    # ----------------------------------------------------
+    - name: Upload the compiled EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: SimpleBrowser-32bit-Windows-EXE
+        # Nuitkaはデフォルトでカレントディレクトリに EXE を出力します
+        path: browser.exe
+        # ちなみに、Nuitkaはビルド時に .dist フォルダを作りません。
